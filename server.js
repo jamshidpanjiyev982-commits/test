@@ -65,21 +65,52 @@ const ResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const AdminSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true, unique: true, trim: true },
+    password: { type: String, required: true }, // plain text for simplicity (use bcrypt in production)
+    role: { type: String, enum: ["super", "admin"], default: "admin" },
+  },
+  { timestamps: true }
+);
+
 const User = mongoose.model("User", UserSchema);
 const Result = mongoose.model("Result", ResultSchema);
+const Admin = mongoose.model("Admin", AdminSchema);
 
 /* ---------- Helpers ---------- */
-function adminAuth(req, res, next) {
-  const pwd = req.headers["x-admin-password"] || req.query.password;
-  if (pwd !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
+async function adminAuth(req, res, next) {
+  const authHeader = req.headers["authorization"] || req.headers["x-admin-credentials"] || req.query.credentials;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Credentials required" });
   }
-  next();
+  // Format: "username:password"
+  const [username, password] = Buffer.from(authHeader, "base64").toString().split(":");
+  if (!username || !password) {
+    return res.status(401).json({ error: "Invalid credentials format" });
+  }
+  try {
+    const admin = await Admin.findOne({ username }).select("password role");
+    if (!admin || admin.password !== password) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+    req.admin = { username: admin.username, role: admin.role };
+    next();
+  } catch (e) {
+    return res.status(500).json({ error: "Auth error" });
+  }
 }
 
 function requireDb(req, res, next) {
   if (!dbReady()) {
     return res.status(503).json({ error: "MongoDB ulanmagan. Atlas Network Access va parolni tekshiring." });
+  }
+  next();
+}
+
+function requireSuper(req, res, next) {
+  if (!req.admin || req.admin.role !== "super") {
+    return res.status(403).json({ error: "Super admin required" });
   }
   next();
 }
@@ -117,19 +148,19 @@ app.post("/api/result", async (req, res) => {
 
 /* ---------- Routes: admin ---------- */
 
-// Admin: list users
-app.get("/api/admin/users", adminAuth, requireDb, async (req, res) => {
+// Admin: list users (super only)
+app.get("/api/admin/users", adminAuth, requireDb, requireSuper, async (req, res) => {
   const users = await User.find().sort({ createdAt: -1 }).lean();
   res.json(users);
 });
 
-// Admin: list results
+// Admin: list results (all admins can view)
 app.get("/api/admin/results", adminAuth, requireDb, async (req, res) => {
   const results = await Result.find().sort({ createdAt: -1 }).lean();
   res.json(results);
 });
 
-// Admin: stats summary
+// Admin: stats summary (all admins can view)
 app.get("/api/admin/stats", adminAuth, requireDb, async (req, res) => {
   const [usersCount, resultsCount, agg] = await Promise.all([
     User.countDocuments(),
@@ -155,8 +186,8 @@ app.get("/api/admin/stats", adminAuth, requireDb, async (req, res) => {
   });
 });
 
-// Admin: delete a user
-app.delete("/api/admin/users/:id", adminAuth, requireDb, async (req, res) => {
+// Admin: delete a user (super only)
+app.delete("/api/admin/users/:id", adminAuth, requireDb, requireSuper, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
@@ -165,14 +196,19 @@ app.delete("/api/admin/users/:id", adminAuth, requireDb, async (req, res) => {
   }
 });
 
-// Admin: delete a result
-app.delete("/api/admin/results/:id", adminAuth, requireDb, async (req, res) => {
+// Admin: delete a result (super only)
+app.delete("/api/admin/results/:id", adminAuth, requireDb, requireSuper, async (req, res) => {
   try {
     await Result.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "delete failed" });
   }
+});
+
+// Admin: get current admin info (for UI)
+app.get("/api/admin/me", adminAuth, requireDb, async (req, res) => {
+  res.json({ username: req.admin.username, role: req.admin.role });
 });
 
 /* ---------- Admin page ---------- */

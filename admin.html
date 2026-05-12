@@ -94,8 +94,9 @@
   <!-- Login screen -->
   <div id="loginView" class="login">
     <h2>🔐 Admin kirish</h2>
-    <p class="sub">Parolni kiriting</p>
-    <input type="password" id="pwd" placeholder="Admin password" />
+    <p class="sub">Username va parolni kiriting</p>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="pwd" placeholder="Parol" />
     <div class="err" id="loginErr"></div>
     <button class="btn" id="loginBtn">Kirish</button>
   </div>
@@ -129,7 +130,8 @@
 
 <script>
 const API = "/api/admin";
-let pwd = sessionStorage.getItem("qv_admin_pwd") || "";
+let credentials = sessionStorage.getItem("qv_admin_creds") || "";
+let currentAdmin = null; // { username, role }
 let activeTab = "users";
 let cache = { users: [], results: [] };
 
@@ -138,36 +140,94 @@ const $ = (id) => document.getElementById(id);
 async function api(path, opts = {}) {
   const res = await fetch(API + path, {
     ...opts,
-    headers: { "Content-Type": "application/json", "x-admin-password": pwd, ...(opts.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-credentials": credentials,
+      ...(opts.headers || {})
+    },
   });
   if (res.status === 401) { const e = new Error("unauth"); e.code = 401; throw e; }
+  if (res.status === 403) { const e = new Error("forbidden"); e.code = 403; throw e; }
   if (!res.ok) { const e = new Error("server"); e.code = res.status; throw e; }
   return res.json();
 }
 
 $("loginBtn").addEventListener("click", login);
 $("pwd").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+$("username").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
 
 async function login() {
-  pwd = $("pwd").value.trim();
+  const username = $("username").value.trim();
+  const password = $("pwd").value.trim();
   $("loginErr").textContent = "";
+  if (!username || !password) {
+    $("loginErr").textContent = "❌ Username va parol kiritilishi shart";
+    return;
+  }
+  // Base64 encode "username:password"
+  credentials = Buffer.from(`${username}:${password}`).toString("base64");
   try {
-    await api("/stats");
-    sessionStorage.setItem("qv_admin_pwd", pwd);
+    const me = await api("/me");
+    currentAdmin = me;
+    sessionStorage.setItem("qv_admin_creds", credentials);
+    sessionStorage.setItem("qv_admin_info", JSON.stringify(me));
     $("loginView").style.display = "none";
     $("dashView").style.display = "block";
+    updateUIForRole();
     loadAll();
   } catch (e) {
     if (e.code === 401) {
-      $("loginErr").textContent = "❌ Parol noto'g'ri";
+      $("loginErr").textContent = "❌ Username yoki parol noto'g'ri";
     } else {
       $("loginErr").textContent = "⚠️ Server/MongoDB xatosi (kod: " + (e.code || "—") + ")";
     }
-    pwd = "";
+    credentials = "";
   }
 }
 
-if (pwd) login();
+function updateUIForRole() {
+  if (!currentAdmin) return;
+  const roleBadge = document.getElementById("roleBadge");
+  if (!roleBadge) {
+    const badge = document.createElement("span");
+    badge.id = "roleBadge";
+    badge.style.cssText = "font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; margin-left:10px;";
+    document.querySelector(".topbar div").appendChild(badge);
+  }
+  const badge = document.getElementById("roleBadge");
+  if (currentAdmin.role === "super") {
+    badge.textContent = "👑 Super Admin";
+    badge.style.background = "linear-gradient(135deg, #ffd166, #ff4ecd)";
+    badge.style.color = "#fff";
+    // Show Users tab
+    document.querySelector('[data-tab="users"]').style.display = "";
+  } else {
+    badge.textContent = "👤 Admin";
+    badge.style.background = "rgba(0,210,255,0.15)";
+    badge.style.color = "#00d2ff";
+    // Hide Users tab (regular admin can only view results)
+    document.querySelector('[data-tab="users"]').style.display = "none";
+    // If on users tab, switch to results
+    if (activeTab === "users") {
+      activeTab = "results";
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelector('[data-tab="results"]').classList.add("active");
+    }
+  }
+}
+
+if (credentials) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("qv_admin_info"));
+    if (saved) {
+      currentAdmin = saved;
+      updateUIForRole();
+      $("loginView").style.display = "none";
+      $("dashView").style.display = "block";
+      loadAll();
+    }
+  } catch (e) {}
+}
 
 document.querySelectorAll(".tab").forEach(t => {
   t.addEventListener("click", () => {
@@ -221,6 +281,7 @@ function levelPill(l) {
 
 function render() {
   const q = $("search").value.toLowerCase().trim();
+  const canDelete = currentAdmin && currentAdmin.role === "super";
   if (activeTab === "users") {
     const rows = cache.users.filter(u =>
       !q || `${u.firstName} ${u.lastName} ${u.school} ${u.grade} ${u.phone1}`.toLowerCase().includes(q)
@@ -230,7 +291,7 @@ function render() {
       <table>
         <thead><tr>
           <th>#</th><th>Ism Familya</th><th>Maktab</th><th>Sinf</th>
-          <th>Telefon</th><th>Qo'shimcha</th><th>Sana</th><th></th>
+          <th>Telefon</th><th>Qo'shimcha</th><th>Sana</th>${canDelete ? "<th></th>" : ""}
         </tr></thead>
         <tbody>${rows.map((u,i) => `
           <tr>
@@ -241,7 +302,7 @@ function render() {
             <td>${esc(u.phone1)}</td>
             <td>${esc(u.phone2 || "—")}</td>
             <td>${fmt(u.createdAt)}</td>
-            <td><button class="btn danger" onclick="del('users','${u._id}')">O'chirish</button></td>
+            ${canDelete ? `<td><button class="btn danger" onclick="del('users','${u._id}')">O'chirish</button></td>` : ""}
           </tr>`).join("")}
         </tbody>
       </table>`;
@@ -254,7 +315,7 @@ function render() {
       <table>
         <thead><tr>
           <th>#</th><th>O'yinchi</th><th>Maktab/Sinf</th><th>XP</th>
-          <th>To'g'ri/Noto'g'ri</th><th>Aniqlik</th><th>Daraja</th><th>Sana</th><th></th>
+          <th>To'g'ri/Noto'g'ri</th><th>Aniqlik</th><th>Daraja</th><th>Sana</th>${canDelete ? "<th></th>" : ""}
         </tr></thead>
         <tbody>${rows.map((r,i) => `
           <tr>
@@ -266,7 +327,7 @@ function render() {
             <td>${r.accuracy || 0}%</td>
             <td>${levelPill(r.level)}</td>
             <td>${fmt(r.createdAt)}</td>
-            <td><button class="btn danger" onclick="del('results','${r._id}')">O'chirish</button></td>
+            ${canDelete ? `<td><button class="btn danger" onclick="del('results','${r._id}')">O'chirish</button></td>` : ""}
           </tr>`).join("")}
         </tbody>
       </table>`;
