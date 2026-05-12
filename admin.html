@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuizVerse — Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63 50%, #24243e);
+    color: #f5f7ff; min-height: 100vh; padding: 30px 20px;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 28px; margin-bottom: 6px; }
+  h1 .grad {
+    background: linear-gradient(90deg, #00d2ff, #ff4ecd);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { color: #b9bdd6; margin-bottom: 24px; font-size: 14px; }
+
+  /* Login */
+  .login {
+    max-width: 380px; margin: 80px auto;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 18px; padding: 30px; backdrop-filter: blur(14px);
+    text-align: center;
+  }
+  .login h2 { margin-bottom: 14px; }
+  .login input {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 15px; margin-bottom: 12px;
+  }
+  .btn {
+    padding: 11px 22px; border-radius: 999px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #7c5cff, #ff4ecd);
+    color: #fff; font-weight: 700; font-size: 14px;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.25); }
+  .btn.danger { background: linear-gradient(135deg, #ff5d7a, #ff4ecd); padding: 6px 12px; font-size: 12px; }
+
+  /* Stats cards */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 14px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 18px; backdrop-filter: blur(10px);
+  }
+  .stat-card .label { color: #b9bdd6; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: #00d2ff; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 18px; border-radius: 999px; cursor: pointer;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    color: #f5f7ff; font-weight: 600; font-size: 14px;
+  }
+  .tab.active { background: linear-gradient(135deg, #7c5cff, #ff4ecd); border-color: transparent; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .search {
+    padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07); color: #fff; font-size: 14px; min-width: 220px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; overflow: hidden; backdrop-filter: blur(10px); overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 800px; }
+  th, td { padding: 12px 14px; text-align: left; font-size: 13px; }
+  th { background: rgba(255,255,255,0.08); color: #b9bdd6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+  tr { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  tr:hover { background: rgba(255,255,255,0.03); }
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .pill.beg { background: rgba(34,227,164,0.15); color: #22e3a4; }
+  .pill.mid { background: rgba(0,210,255,0.15); color: #00d2ff; }
+  .pill.adv { background: rgba(255,78,205,0.18); color: #ff4ecd; }
+  .empty { padding: 40px; text-align: center; color: #b9bdd6; }
+  .err { color: #ff5d7a; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Login screen -->
+  <div id="loginView" class="login">
+    <h2>🔐 Admin kirish</h2>
+    <p class="sub">Parolni kiriting</p>
+    <input type="password" id="pwd" placeholder="Admin password" />
+    <div class="err" id="loginErr"></div>
+    <button class="btn" id="loginBtn">Kirish</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashView" style="display:none;">
+    <div class="topbar">
+      <div>
+        <h1>Quiz<span class="grad">Verse</span> — Admin</h1>
+        <p class="sub">Foydalanuvchilar va natijalarni boshqarish paneli</p>
+      </div>
+      <div>
+        <input class="search" id="search" placeholder="Qidirish..." />
+        <button class="btn ghost" id="refreshBtn">↻ Yangilash</button>
+        <button class="btn ghost" id="logoutBtn">Chiqish</button>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="users">👥 Foydalanuvchilar</button>
+      <button class="tab" data-tab="results">🏆 Natijalar</button>
+    </div>
+
+    <div class="table-wrap">
+      <div id="tableArea"><div class="empty">Yuklanmoqda...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "/api/admin";
+let pwd = sessionStorage.getItem("qv_admin_pwd") || "";
+let activeTab = "users";
+let cache = { users: [], results: [] };
+
+const $ = (id) => document.getElementById(id);
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", "x-admin-password": pwd, ...(opts.headers || {}) },
+  });
+  if (res.status === 401) { const e = new Error("unauth"); e.code = 401; throw e; }
+  if (!res.ok) { const e = new Error("server"); e.code = res.status; throw e; }
+  return res.json();
+}
+
+$("loginBtn").addEventListener("click", login);
+$("pwd").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+async function login() {
+  pwd = $("pwd").value.trim();
+  $("loginErr").textContent = "";
+  try {
+    await api("/stats");
+    sessionStorage.setItem("qv_admin_pwd", pwd);
+    $("loginView").style.display = "none";
+    $("dashView").style.display = "block";
+    loadAll();
+  } catch (e) {
+    if (e.code === 401) {
+      $("loginErr").textContent = "❌ Parol noto'g'ri";
+    } else {
+      $("loginErr").textContent = "⚠️ Server/MongoDB xatosi (kod: " + (e.code || "—") + ")";
+    }
+    pwd = "";
+  }
+}
+
+if (pwd) login();
+
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    activeTab = t.dataset.tab;
+    render();
+  });
+});
+$("search").addEventListener("input", render);
+$("refreshBtn").addEventListener("click", loadAll);
+$("logoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem("qv_admin_pwd"); pwd = "";
+  $("loginView").style.display = "block"; $("dashView").style.display = "none";
+});
+
+async function loadAll() {
+  $("tableArea").innerHTML = '<div class="empty">Yuklanmoqda...</div>';
+  try {
+    const [stats, users, results] = await Promise.all([
+      api("/stats"), api("/users"), api("/results"),
+    ]);
+    cache.users = users; cache.results = results;
+    renderStats(stats);
+    render();
+  } catch (e) {
+    $("tableArea").innerHTML = '<div class="empty">❌ Xato yuz berdi</div>';
+  }
+}
+
+function renderStats(s) {
+  $("stats").innerHTML = `
+    <div class="stat-card"><div class="label">👥 Foydalanuvchilar</div><div class="value">${s.usersCount}</div></div>
+    <div class="stat-card"><div class="label">🏆 Yakunlanganlar</div><div class="value">${s.resultsCount}</div></div>
+    <div class="stat-card"><div class="label">⭐ O'rtacha XP</div><div class="value">${s.avgScore}</div></div>
+    <div class="stat-card"><div class="label">🥇 Eng yuqori</div><div class="value">${s.maxScore}</div></div>
+    <div class="stat-card"><div class="label">🎯 O'rtacha aniqlik</div><div class="value">${s.avgAccuracy}%</div></div>
+  `;
+}
+
+function fmt(d) {
+  if (!d) return "-";
+  const dt = new Date(d);
+  return dt.toLocaleDateString("uz-UZ") + " " + dt.toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" });
+}
+
+function levelPill(l) {
+  const c = l === "Mahir" ? "adv" : l === "O'rta" ? "mid" : "beg";
+  return `<span class="pill ${c}">${l || "—"}</span>`;
+}
+
+function render() {
+  const q = $("search").value.toLowerCase().trim();
+  if (activeTab === "users") {
+    const rows = cache.users.filter(u =>
+      !q || `${u.firstName} ${u.lastName} ${u.school} ${u.grade} ${u.phone1}`.toLowerCase().includes(q)
+    );
+    if (!rows.length) return $("tableArea").innerHTML = '<div class="empty">Hozircha foydalanuvchi yo\'q</div>';
+    $("tableArea").innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Ism Familya</th><th>Maktab</th><th>Sinf</th>
+          <th>Telefon</th><th>Qo'shimcha</th><th>Sana</th><th></th>
+        </tr></thead>
+        <tbody>${rows.map((u,i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td><b>${esc(u.firstName)} ${esc(u.lastName)}</b></td>
+            <td>${esc(u.school)}</td>
+            <td>${esc(u.grade)}</td>
+            <td>${esc(u.phone1)}</td>
+            <td>${esc(u.phone2 || "—")}</td>
+            <td>${fmt(u.createdAt)}</td>
+            <td><button class="btn danger" onclick="del('users','${u._id}')">O'chirish</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  } else {
+    const rows = cache.results.filter(r =>
+      !q || `${r.name} ${r.school} ${r.grade}`.toLowerCase().includes(q)
+    );
+    if (!rows.length) return $("tableArea").innerHTML = '<div class="empty">Hozircha natija yo\'q</div>';
+    $("tableArea").innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>O'yinchi</th><th>Maktab/Sinf</th><th>XP</th>
+          <th>To'g'ri/Noto'g'ri</th><th>Aniqlik</th><th>Daraja</th><th>Sana</th><th></th>
+        </tr></thead>
+        <tbody>${rows.map((r,i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td>${r.avatar || ""} <b>${esc(r.name || "—")}</b></td>
+            <td>${esc(r.school || "—")} • ${esc(r.grade || "—")}</td>
+            <td><b style="color:#ffd166">${r.score || 0}</b></td>
+            <td>✅${r.correct||0} / ❌${r.wrong||0}</td>
+            <td>${r.accuracy || 0}%</td>
+            <td>${levelPill(r.level)}</td>
+            <td>${fmt(r.createdAt)}</td>
+            <td><button class="btn danger" onclick="del('results','${r._id}')">O'chirish</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+}
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+window.del = async (kind, id) => {
+  if (!confirm("Rostdan ham o'chirilsinmi?")) return;
+  await api(`/${kind}/${id}`, { method: "DELETE" });
+  loadAll();
+};
+</script>
+</body>
+</html>

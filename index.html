@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizVerse — IT & English Sayohat</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Animated background blobs -->
+  <div class="bg-blobs">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+  </div>
+
+  <button id="themeToggle" class="theme-toggle" title="Tema">🌙</button>
+
+  <main class="app">
+
+    <!-- =================== REGISTER SCREEN =================== -->
+    <section id="registerScreen" class="screen active glass">
+      <div class="logo">📝</div>
+      <h1 class="title">Ro'yxatdan <span class="grad">o'tish</span></h1>
+      <p class="subtitle">QuizVerse sayohatini boshlashdan oldin o'zingiz haqingizda ma'lumot qoldiring 👇</p>
+
+      <form id="registerForm" class="register-form" novalidate>
+        <div class="form-row">
+          <label>Ism <span class="req">*</span>
+            <input type="text" id="rgFirstName" placeholder="Masalan: Ali" maxlength="30" required />
+          </label>
+          <label>Familya <span class="req">*</span>
+            <input type="text" id="rgLastName" placeholder="Masalan: Karimov" maxlength="30" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Maktab <span class="req">*</span>
+            <input type="text" id="rgSchool" placeholder="Masalan: 24-maktab" maxlength="60" required />
+          </label>
+          <label>Sinf <span class="req">*</span>
+            <input type="text" id="rgGrade" placeholder="Masalan: 9-A" maxlength="10" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Telefon raqami <span class="req">*</span>
+            <div class="phone-input">
+              <span class="phone-prefix">+998</span>
+              <input type="tel" id="rgPhone1" placeholder="90 123 45 67" maxlength="14" required inputmode="numeric" />
+            </div>
+          </label>
+          <label>Qo'shimcha telefon <span class="opt">ixtiyoriy</span>
+            <div class="phone-input">
+              <span class="phone-prefix">+998</span>
+              <input type="tel" id="rgPhone2" placeholder="90 123 45 67" maxlength="14" inputmode="numeric" />
+            </div>
+          </label>
+        </div>
+        <div class="form-error" id="formError"></div>
+        <button type="submit" class="btn-primary">Davom etish ▶</button>
+      </form>
+    </section>
+
+    <!-- =================== START SCREEN =================== -->
+    <section id="startScreen" class="screen glass">
+      <div class="logo">🚀</div>
+      <h1 class="title">Salom, <span class="grad" id="greetName">Qahramon</span>!</h1>
+      <p class="subtitle">IT-olam va English Town bo'ylab <b>sayohat</b> qiling — 5 lokatsiya, 20 savol! 🗺️<br>Avatar tanlang va boshlang:</p>
+
+      <div class="profile">
+        <div class="avatar-picker">
+          <span class="avatar active">🦊</span>
+          <span class="avatar">🐼</span>
+          <span class="avatar">🐸</span>
+          <span class="avatar">🦄</span>
+          <span class="avatar">🤖</span>
+          <span class="avatar">👾</span>
+        </div>
+      </div>
+
+      <!-- Stages preview -->
+      <div class="stages-preview">
+        <div class="stage-card"><span>🏠</span><b>Boshlang'ich uy</b><small>Kompyuter asoslari</small></div>
+        <div class="stage-card"><span>🌐</span><b>Internet o'rmoni</b><small>Brauzer, Email, IP</small></div>
+        <div class="stage-card"><span>🔐</span><b>Parol qal'asi</b><small>Xavfsizlik</small></div>
+        <div class="stage-card"><span>🏫</span><b>English maktabi</b><small>Grammar asoslari</small></div>
+        <div class="stage-card"><span>🎓</span><b>Bitiruv minorasi</b><small>Daily English + IT</small></div>
+      </div>
+
+      <button id="startBtn" class="btn-primary">Sayohatni boshlash ⚡</button>
+
+      <div class="info-row">
+        <div class="info-card">⏱️ <b>20s</b><span>har savolga</span></div>
+        <div class="info-card">🎯 <b>+10 XP</b><span>to'g'ri javob</span></div>
+        <div class="info-card">🔥 <b>Streak</b><span>bonus</span></div>
+      </div>
+    </section>
+
+    <!-- =================== STAGE INTRO SCREEN =================== -->
+    <section id="stageIntroScreen" class="screen glass">
+      <div class="stage-intro-index" id="stageIntroIndex">Lokatsiya 1 / 5</div>
+      <div class="stage-intro-emoji" id="stageIntroEmoji">🏠</div>
+      <h1 class="title" id="stageIntroName">Boshlang'ich uy</h1>
+      <p class="subtitle" id="stageIntroText">...</p>
+
+      <div class="stage-map" id="introMap"></div>
+
+      <button id="stageStartBtn" class="btn-primary">Kirish ▶</button>
+    </section>
+
+    <!-- =================== QUIZ SCREEN =================== -->
+    <section id="quizScreen" class="screen glass">
+      <!-- Top bar -->
+      <div class="topbar">
+        <div class="chip stage-chip" id="stageBadge">🏠 Lokatsiya</div>
+        <div class="chip">Q <span id="qIndex">1</span>/<span id="qTotal">20</span></div>
+        <div class="chip xp">⭐ <span id="score">0</span></div>
+        <div class="chip streak">🔥 <span id="streak">0</span></div>
+        <div class="chip timer" id="timerChip">⏱️ <span id="timer">20</span>s</div>
+      </div>
+
+      <!-- Overall progress -->
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Stage dots -->
+      <div class="stage-dots" id="stageDots"></div>
+
+      <!-- Walking character -->
+      <div class="character" id="character"><span id="playerAvatar">🦊</span></div>
+
+      <!-- Question card -->
+      <div class="question-card" id="questionCard">
+        <div class="qmeta">
+          <span class="qtype" id="qType">Variantli</span>
+        </div>
+        <h2 class="question" id="questionText"></h2>
+        <div class="visual" id="qVisual"></div>
+
+        <div class="options" id="options"></div>
+
+        <div class="fillin" id="fillinWrap" style="display:none;">
+          <input type="text" id="fillinInput" placeholder="Javobni yozing..." />
+          <button id="fillinSubmit" class="btn-primary small">OK</button>
+        </div>
+
+        <div class="explanation" id="explanation"></div>
+        <div class="bridge" id="bridge"></div>
+
+        <div class="nav-row">
+          <button id="skipBtn" class="btn-ghost">O'tkazib yuborish ⏭️</button>
+          <span class="auto-hint">⏩ Avtomatik o'tadi</span>
+        </div>
+      </div>
+
+      <div id="reaction" class="reaction"></div>
+    </section>
+
+    <!-- =================== STAGE END SCREEN =================== -->
+    <section id="stageEndScreen" class="screen glass">
+      <div class="stage-end-emoji" id="stageEndEmoji">🏠</div>
+      <h1 class="title">Lokatsiya yakunlandi<span class="grad">!</span></h1>
+      <p class="subtitle"><b id="stageEndName">...</b> — <span id="stageEndMsg">Ajoyib ish!</span></p>
+
+      <div class="stats">
+        <div class="stat"><b id="stageEndScore">0</b><span>Jami XP</span></div>
+        <div class="stat correct"><b id="stageEndCorrect">0</b><span>✅ To'g'ri</span></div>
+        <div class="stat wrong"><b id="stageEndWrong">0</b><span>❌ Noto'g'ri</span></div>
+      </div>
+
+      <h3 class="badges-title">🏅 To'plangan rozetkalar</h3>
+      <div class="badges" id="badgesWrap"></div>
+
+      <div class="stage-map" id="endMap"></div>
+
+      <div class="nav-row center">
+        <button id="stageEndNextBtn" class="btn-primary">▶ Davom etish</button>
+      </div>
+    </section>
+
+    <!-- =================== RESULT SCREEN =================== -->
+    <section id="resultScreen" class="screen glass">
+      <div class="result-emoji" id="resultEmoji">🏆</div>
+      <h1 class="title">Sayohat yakunlandi<span class="grad">!</span></h1>
+      <p class="subtitle" id="resultMessage">Ajoyib!</p>
+
+      <div class="stats">
+        <div class="stat"><b id="finalScore">0</b><span>Jami XP</span></div>
+        <div class="stat correct"><b id="correctCount">0</b><span>✅ To'g'ri</span></div>
+        <div class="stat wrong"><b id="wrongCount">0</b><span>❌ Noto'g'ri</span></div>
+        <div class="stat"><b id="accuracy">0%</b><span>🎯 Aniqlik</span></div>
+      </div>
+
+      <div class="level-card" id="levelCard">
+        <h3>Sizning darajangiz</h3>
+        <div class="level-name" id="levelName">Boshlovchi</div>
+        <div class="level-bar"><div class="level-fill" id="levelFill"></div></div>
+      </div>
+
+      <div class="certificate" id="certificate">
+        <div class="cert-border">
+          <small>SERTIFIKAT</small>
+          <h2 id="certName">Qahramon</h2>
+          <div class="cert-info" id="certInfo"></div>
+          <p>QuizVerse sayohatini <b id="certScore">0</b> XP bilan yakunladi</p>
+          <div class="cert-sign">— QuizVerse Akademiyasi 🎓</div>
+        </div>
+      </div>
+
+      <div class="leaderboard">
+        <h3>🏅 Reyting</h3>
+        <ol id="leaderboardList"></ol>
+      </div>
+
+      <div class="nav-row center">
+        <button id="restartBtn" class="btn-primary">🔄 Qayta o'ynash</button>
+        <button id="shareBtn" class="btn-ghost">📤 Ulashish</button>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="confetti"></canvas>
+
+  <script src="script.js"></script>
+</body>
+</html>
