@@ -1,14 +1,14 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  command = "echo 'build ok'"
 
 [functions]
-  # zisi (default) doesn't tree-shake — safer for mongoose/bcryptjs
-  node_bundler = "zisi"
-  # Make sure these get packaged with the function
-  included_files = ["lib/**", "api/**", "server.js", "package.json"]
-  # Increase timeout for cold starts (default 10s on free, 26s max)
-  # Note: this is set via the dashboard for Pro plans; free is capped at 10s
+  # esbuild bundles all JS (bcryptjs, express, serverless-http, jwt) into one file.
+  # mongoose is excluded from bundling (complex + native optionals) — included as node_module.
+  node_bundler = "esbuild"
+  external_node_modules = ["mongoose", "express"]
+  included_files = ["lib/**", "api/**", "app.js", "package.json"]
 
 # Route all /api/* requests through the Express function
 [[redirects]]
