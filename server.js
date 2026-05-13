@@ -31,6 +31,7 @@ app.use(express.static(__dirname, {
 const { connectDB } = require("./lib/db");
 
 const apiRoutes = [
+  { method: "get",  path: "/api/health",           file: "./api/health.js" },
   { method: "post", path: "/api/register",         file: "./api/register.js" },
   { method: "post", path: "/api/result",           file: "./api/result.js" },
   { method: "post", path: "/api/admin/login",      file: "./api/admin/login.js" },
