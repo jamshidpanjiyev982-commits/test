@@ -1,15 +1,23 @@
 {
   "name": "quizverse",
-  "version": "1.0.0",
-  "description": "QuizVerse — IT & English quiz with MongoDB backend and admin panel",
+  "version": "2.0.0",
+  "description": "QuizVerse — gamified quiz app with serverless backend and admin panel",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "seed": "node scripts/seed-admins.js",
+    "migrate": "node scripts/migrate-passwords.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.1"
   }
 }
