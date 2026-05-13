@@ -175,9 +175,11 @@ async function login() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      const detail = data.detail ? ` (${data.detail})` : "";
       if (res.status === 429) $("loginErr").textContent = "⏳ " + (data.error || "Juda ko'p urinish");
       else if (res.status === 423) $("loginErr").textContent = "🔒 " + (data.error || "Bloklangan");
-      else if (res.status === 503) $("loginErr").textContent = "⚠️ Server/MongoDB ulanmagan";
+      else if (res.status === 503) $("loginErr").textContent = "⚠️ " + (data.error || "Server/MongoDB ulanmagan") + detail;
+      else if (res.status === 500) $("loginErr").textContent = "❌ " + (data.error || "Server xato") + detail;
       else $("loginErr").textContent = "❌ " + (data.error || "Login yoki parol noto'g'ri");
       return;
     }
