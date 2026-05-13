@@ -54,10 +54,15 @@ for (const r of apiRoutes) {
 
 app.get("/admin", (_req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 
-/* ---------- Start ---------- */
-connectDB().catch((e) => console.error("Initial DB connect failed:", e.message));
-app.listen(PORT, () => {
-  console.log("🚀 QuizVerse server running:");
-  console.log(`   App:   http://localhost:${PORT}`);
-  console.log(`   Admin: http://localhost:${PORT}/admin`);
-});
+/* ---------- Export app for serverless wrappers ---------- */
+module.exports = app;
+
+/* ---------- Start (only when run directly: `node server.js`) ---------- */
+if (require.main === module) {
+  connectDB().catch((e) => console.error("Initial DB connect failed:", e.message));
+  app.listen(PORT, () => {
+    console.log("🚀 QuizVerse server running:");
+    console.log(`   App:   http://localhost:${PORT}`);
+    console.log(`   Admin: http://localhost:${PORT}/admin`);
+  });
+}
