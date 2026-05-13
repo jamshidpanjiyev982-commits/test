@@ -3,9 +3,12 @@
   functions = "netlify/functions"
 
 [functions]
-  node_bundler = "esbuild"
-  # Include lib + api folders so the bundled function can require them
-  included_files = ["lib/**", "api/**", "server.js"]
+  # zisi (default) doesn't tree-shake — safer for mongoose/bcryptjs
+  node_bundler = "zisi"
+  # Make sure these get packaged with the function
+  included_files = ["lib/**", "api/**", "server.js", "package.json"]
+  # Increase timeout for cold starts (default 10s on free, 26s max)
+  # Note: this is set via the dashboard for Pro plans; free is capped at 10s
 
 # Route all /api/* requests through the Express function
 [[redirects]]
