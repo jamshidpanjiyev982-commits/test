@@ -1,14 +1,13 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  command = "echo 'build ok'"
+  command = "npm ci"
 
 [functions]
-  # esbuild bundles all JS (bcryptjs, express, serverless-http, jwt) into one file.
-  # mongoose is excluded from bundling (complex + native optionals) — included as node_module.
-  node_bundler = "esbuild"
-  external_node_modules = ["mongoose", "express"]
-  included_files = ["lib/**", "api/**", "app.js", "package.json"]
+  # zisi includes ALL node_modules in the function zip — bcryptjs, jwt, mongoose, etc.
+  # npm ci (above) ensures a clean, reproducible install before zisi packages it.
+  node_bundler = "zisi"
+  included_files = ["lib/**", "api/**", "app.js"]
 
 # Route all /api/* requests through the Express function
 [[redirects]]
